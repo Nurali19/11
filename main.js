@@ -43,9 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get local IP address
     async function getLocalIP() {
         try {
-            // For local development, use localhost
+            // For local development, use the actual local network IP
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                return 'localhost';
+                // Return the local network IP for phone connections
+                return '172.20.10.3';
             }
             
             // For GitHub Pages or other hosted sites, try to get the actual hostname
@@ -67,6 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateConnectionUrl() {
         const protocol = window.location.protocol;
         const host = window.location.host;
+        
+        // For local development, use the local network IP with port 8000
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return `${protocol}//172.20.10.3:8000/phone.html`;
+        }
+        
         return `${protocol}//${host}/phone.html`;
     }
     
