@@ -43,12 +43,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Get local IP address
     async function getLocalIP() {
         try {
+            // For local development, use localhost
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                return 'localhost';
+            }
+            
+            // For GitHub Pages or other hosted sites, try to get the actual hostname
+            if (window.location.hostname.includes('github.io') || window.location.hostname.includes('netlify.app') || window.location.hostname.includes('vercel.app')) {
+                return window.location.hostname;
+            }
+            
+            // Fallback to external IP service
             const response = await fetch('https://api.ipify.org?format=json');
             const data = await response.json();
             return data.ip;
         } catch (error) {
             console.error('Error getting IP:', error);
-            return 'localhost';
+            return window.location.hostname || 'localhost';
         }
     }
     
@@ -63,6 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateQRCode() {
         const url = connectionUrl;
         
+        if (!url) {
+            console.error('No connection URL available');
+            updateConnectionStatus('Error: No connection URL', 'error');
+            return;
+        }
+        
+        // Clear previous QR code
+        qrCodeElement.innerHTML = '';
+        
         QRCode.toCanvas(qrCodeElement, url, {
             width: 256,
             margin: 2,
@@ -74,8 +94,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error) {
                 console.error('Error generating QR code:', error);
                 updateConnectionStatus('Error generating QR code', 'error');
+                
+                // Fallback: show URL as text
+                qrCodeElement.innerHTML = `
+                    <div style="padding: 20px; text-align: center; border: 2px dashed #ccc;">
+                        <p><strong>QR Code Error</strong></p>
+                        <p>Please use the manual URL below:</p>
+                        <p style="word-break: break-all; font-family: monospace;">${url}</p>
+                    </div>
+                `;
             } else {
                 console.log('QR code generated successfully');
+                updateConnectionStatus('QR code ready - scan with phone camera', 'waiting');
             }
         });
     }
@@ -577,13 +607,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize connection system
     async function initializeConnection() {
         try {
+            updateConnectionStatus('Initializing connection...', 'waiting');
+            
             connectionUrl = generateConnectionUrl();
+            console.log('Generated connection URL:', connectionUrl);
+            
             localIp = await getLocalIP();
+            console.log('Local IP:', localIp);
             
             connectionUrlElement.textContent = connectionUrl;
             localIpElement.textContent = localIp;
             manualUrlElement.textContent = connectionUrl;
             
+            updateConnectionStatus('Generating QR code...', 'waiting');
             generateQRCode();
             
             updateConnectionStatus('Ready for phone connection', 'waiting');
@@ -622,7 +658,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error initializing connection:', error);
-            updateConnectionStatus('Error initializing connection', 'error');
+            updateConnectionStatus(`Error initializing connection: ${error.message}`, 'error');
+            
+            // Show fallback information
+            connectionUrlElement.textContent = 'Error generating URL';
+            localIpElement.textContent = 'Error getting IP';
+            manualUrlElement.textContent = 'Please refresh the page';
         }
     }
     
