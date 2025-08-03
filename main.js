@@ -70,8 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${protocol}//${host}/phone.html`;
     }
     
-    // Generate QR code for connection
-    function generateQRCode() {
+    // Generate connection display (no external dependencies)
+    function generateConnectionDisplay() {
         const url = connectionUrl;
         
         if (!url) {
@@ -80,58 +80,39 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Clear previous QR code
+        // Clear previous content
         qrCodeElement.innerHTML = '';
         
-        // Check if QRCode library is available
-        if (typeof QRCode === 'undefined') {
-            console.error('QRCode library not loaded');
-            updateConnectionStatus('QR code library not available - using manual URL', 'waiting');
-            
-            // Fallback: show URL as clickable link
-            qrCodeElement.innerHTML = `
-                <div style="padding: 20px; text-align: center; border: 2px dashed #ccc; background: #f9f9f9;">
-                    <p><strong>📱 Phone Connection</strong></p>
-                    <p>QR Code library not available</p>
-                    <p>Please click the link below:</p>
-                    <a href="${url}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">
-                        🔗 Open Phone Connection
-                    </a>
-                    <p style="word-break: break-all; font-family: monospace; font-size: 12px; margin-top: 10px;">${url}</p>
-                </div>
-            `;
-            return;
-        }
-        
-        QRCode.toCanvas(qrCodeElement, url, {
-            width: 256,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#FFFFFF'
-            }
-        }, function (error) {
-            if (error) {
-                console.error('Error generating QR code:', error);
-                updateConnectionStatus('Error generating QR code - using manual URL', 'waiting');
+        // Create a simple, reliable connection display
+        qrCodeElement.innerHTML = `
+            <div style="padding: 20px; text-align: center; border: 2px solid #007bff; border-radius: 10px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <div style="font-size: 48px; margin-bottom: 15px;">📱</div>
+                <h3 style="color: #007bff; margin-bottom: 15px;">Phone Camera Connection</h3>
+                <p style="margin-bottom: 20px; color: #6c757d;">Click the button below to open the phone connection page</p>
                 
-                // Fallback: show URL as clickable link
-                qrCodeElement.innerHTML = `
-                    <div style="padding: 20px; text-align: center; border: 2px dashed #ccc; background: #f9f9f9;">
-                        <p><strong>📱 Phone Connection</strong></p>
-                        <p>QR Code generation failed</p>
-                        <p>Please click the link below:</p>
-                        <a href="${url}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">
-                            🔗 Open Phone Connection
-                        </a>
-                        <p style="word-break: break-all; font-family: monospace; font-size: 12px; margin-top: 10px;">${url}</p>
-                    </div>
-                `;
-            } else {
-                console.log('QR code generated successfully');
-                updateConnectionStatus('QR code ready - scan with phone camera', 'waiting');
-            }
-        });
+                <a href="${url}" target="_blank" style="display: inline-block; padding: 15px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin: 10px 0; box-shadow: 0 4px 6px rgba(0,123,255,0.3); transition: all 0.3s ease;">
+                    🔗 Open Phone Connection
+                </a>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #28a745;">
+                    <p style="margin: 0; font-size: 14px; color: #495057;"><strong>Instructions:</strong></p>
+                    <ol style="margin: 10px 0 0 0; padding-left: 20px; text-align: left; font-size: 14px; color: #6c757d;">
+                        <li>Click the button above</li>
+                        <li>Allow camera access when prompted</li>
+                        <li>Your phone camera will connect to this computer</li>
+                        <li>Return here to see the monitoring screen</li>
+                    </ol>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+                    <p style="margin: 0; font-size: 12px; color: #856404; word-break: break-all; font-family: monospace;">
+                        <strong>URL:</strong> ${url}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        updateConnectionStatus('Phone connection ready - click the button above', 'waiting');
     }
     
     // Update connection status
@@ -643,12 +624,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localIpElement.textContent = localIp;
             manualUrlElement.textContent = connectionUrl;
             
-            updateConnectionStatus('Generating QR code...', 'waiting');
-            
-            // Wait a bit for QRCode library to load
-            setTimeout(() => {
-                generateQRCode();
-            }, 1000);
+            updateConnectionStatus('Generating connection display...', 'waiting');
+            generateConnectionDisplay();
             
             updateConnectionStatus('Ready for phone connection', 'waiting');
             
