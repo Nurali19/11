@@ -103,11 +103,13 @@
         
         <div class="instructions">
             <h3>Setup Instructions:</h3>
-            <p>1. Position your phone to monitor the exam area</p>
-            <p>2. Make sure the camera has a clear view</p>
-            <p>3. Click "Start Camera" below</p>
-            <p>4. Allow camera access when prompted</p>
-            <p>5. Keep this page open during the exam</p>
+            <p>1. Make sure you're using a modern browser (Chrome, Safari, Firefox)</p>
+            <p>2. Position your phone to monitor the exam area</p>
+            <p>3. Make sure the camera has a clear view</p>
+            <p>4. Click "Start Camera" below</p>
+            <p>5. <strong>Allow camera access</strong> when prompted</p>
+            <p>6. Keep this page open during the exam</p>
+            <p><strong>Note:</strong> If camera doesn't work, try refreshing the page or using a different browser.</p>
         </div>
         
         <div class="connection-info">
@@ -156,31 +158,67 @@
                 updateStatus('Requesting camera access...');
                 updateCameraStatus('Starting...');
                 
-                localStream = await navigator.mediaDevices.getUserMedia({
+                // Check if mediaDevices is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Camera access not supported in this browser. Please use a modern browser or enable camera permissions.');
+                }
+                
+                // Try to get camera access with fallback options
+                let constraints = {
                     video: {
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 },
+                        width: { ideal: 1280, min: 640 },
+                        height: { ideal: 720, min: 480 },
                         facingMode: 'user'
                     },
                     audio: false
-                });
+                };
+                
+                // Try with ideal constraints first
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (constraintError) {
+                    console.log('Ideal constraints failed, trying basic constraints:', constraintError);
+                    // Fallback to basic video constraints
+                    localStream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    });
+                }
                 
                 const videoElement = document.getElementById('localVideo');
                 videoElement.srcObject = localStream;
                 
-                isCameraActive = true;
-                updateStatus('Camera active - Monitoring exam area', 'connected');
-                updateCameraStatus('Active');
-                
-                document.getElementById('startButton').disabled = true;
-                document.getElementById('stopButton').disabled = false;
-                
-                // Send connection status to main page
-                sendConnectionStatus('connected');
+                // Wait for video to load
+                videoElement.onloadedmetadata = () => {
+                    isCameraActive = true;
+                    updateStatus('Camera active - Monitoring exam area', 'connected');
+                    updateCameraStatus('Active');
+                    
+                    document.getElementById('startButton').disabled = true;
+                    document.getElementById('stopButton').disabled = false;
+                    
+                    // Send connection status to main page
+                    sendConnectionStatus('connected');
+                };
                 
             } catch (error) {
                 console.error('Error accessing camera:', error);
-                updateStatus('Error accessing camera: ' + error.message, 'error');
+                
+                let errorMessage = 'Camera access failed. ';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage += 'Please allow camera access when prompted.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage += 'No camera found on this device.';
+                } else if (error.name === 'NotSupportedError') {
+                    errorMessage += 'Camera not supported in this browser.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage += 'Camera is in use by another application.';
+                } else {
+                    errorMessage += error.message || 'Unknown error occurred.';
+                }
+                
+                updateStatus(errorMessage, 'error');
                 updateCameraStatus('Error');
             }
         }
@@ -250,6 +288,22 @@
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Check if we're on HTTPS (required for camera access on most mobile browsers)
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                updateStatus('⚠️ Camera access requires HTTPS. Please use the local version or enable HTTPS.', 'error');
+                updateCameraStatus('HTTPS Required');
+                document.getElementById('startButton').disabled = true;
+                return;
+            }
+            
+            // Check if mediaDevices is available
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                updateStatus('⚠️ Camera access not supported in this browser. Please use a modern browser.', 'error');
+                updateCameraStatus('Not Supported');
+                document.getElementById('startButton').disabled = true;
+                return;
+            }
+            
             updateStatus('Ready to start camera', 'info');
             updateCameraStatus('Ready');
         });
