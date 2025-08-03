@@ -1,0 +1,29 @@
+{
+  "name": "ai-proctoring-system",
+  "version": "1.0.0",
+  "description": "AI-powered proctoring system using MediaPipe Holistic for behavior detection",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000",
+    "build": "echo 'No build step required for static files'",
+    "deploy": "echo 'Deploy using your preferred hosting service'"
+  },
+  "keywords": [
+    "proctoring",
+    "ai",
+    "mediapipe",
+    "computer-vision",
+    "exam-monitoring",
+    "behavior-detection"
+  ],
+  "author": "AI Proctoring System",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ai-proctoring-system.git"
+  },
+  "homepage": "https://yourusername.github.io/ai-proctoring-system",
+  "devDependencies": {},
+  "dependencies": {}
+} 

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Proctoring System - Phone Camera Connection</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Connection Screen -->
+        <div id="connection-screen" class="connection-screen">
+            <div class="connection-content">
+                <h1>AI Proctoring System</h1>
+                <p>Connect your phone camera to start monitoring</p>
+                
+                <div class="qr-section">
+                    <h2>Scan QR Code with Your Phone</h2>
+                    <div id="qr-code" class="qr-code"></div>
+                    <p class="qr-instructions">
+                        1. Open your phone's camera app<br>
+                        2. Point it at the QR code above<br>
+                        3. Tap the notification to open the connection page<br>
+                        4. Allow camera access when prompted<br>
+                        5. The phone will automatically connect to this computer
+                    </p>
+                </div>
+                
+                <div class="connection-status">
+                    <div id="connection-status" class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Waiting for connection...</span>
+                    </div>
+                </div>
+                
+                <div class="connection-info">
+                    <p><strong>Connection URL:</strong> <span id="connection-url">Loading...</span></p>
+                    <p><strong>Local IP:</strong> <span id="local-ip">Loading...</span></p>
+                    <p><strong>Status:</strong> <span id="connection-status-text">Ready to connect</span></p>
+                </div>
+                
+                <div class="manual-connection">
+                    <h3>Manual Connection (if QR code doesn't work)</h3>
+                    <p>On your phone, open this URL:</p>
+                    <div class="url-display" id="manual-url"></div>
+                    <button onclick="copyUrl()" class="copy-btn">Copy URL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitoring Screen (Hidden initially) -->
+        <div id="monitoring-screen" class="monitoring-screen hidden">
+            <video id="phone-video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <div id="status">Connecting to phone camera...</div>
+        </div>
+
+        <p id="links-para">
+            <strong>Proctoring System Controls:</strong><br>
+            - Press "S" to start exam<br>
+            - Press "E" to end exam<br>
+            - System monitors 10 suspicious behaviors automatically
+        </p>
+
+        <a id="logo-link" href="https://www.funwithcomputervision.com/">
+            <span id="logo">🪬</span><br>
+            <span id="logo-subtitle">code & tutorial here</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

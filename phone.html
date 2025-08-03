@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Camera - Proctoring System</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 500px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .status.connected {
+            background: rgba(0, 255, 0, 0.2);
+        }
+        
+        .status.error {
+            background: rgba(255, 0, 0, 0.2);
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        #localVideo {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin: 20px 0;
+            transform: scaleX(-1);
+        }
+        
+        .connection-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Phone Camera Connection</h1>
+        
+        <div id="status" class="status">
+            <p>Ready to connect camera...</p>
+        </div>
+        
+        <div class="instructions">
+            <h3>Setup Instructions:</h3>
+            <p>1. Position your phone to monitor the exam area</p>
+            <p>2. Make sure the camera has a clear view</p>
+            <p>3. Click "Start Camera" below</p>
+            <p>4. Allow camera access when prompted</p>
+            <p>5. Keep this page open during the exam</p>
+        </div>
+        
+        <div class="connection-info">
+            <p><strong>Status:</strong> <span id="connectionStatus">Ready</span></p>
+            <p><strong>Camera:</strong> <span id="cameraStatus">Not started</span></p>
+        </div>
+        
+        <video id="localVideo" autoplay playsinline muted></video>
+        
+        <div>
+            <button id="startButton" onclick="startCamera()">Start Camera</button>
+            <button id="stopButton" onclick="stopCamera()" disabled>Stop Camera</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>Important Notes:</h3>
+            <p>• Keep your phone plugged in during the exam</p>
+            <p>• Don't close this browser tab</p>
+            <p>• Position phone for best coverage of the exam area</p>
+            <p>• The proctoring system will detect behaviors automatically</p>
+        </div>
+    </div>
+
+    <script>
+        let localStream = null;
+        let isCameraActive = false;
+        
+        // Update status
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            const statusText = statusElement.querySelector('p');
+            statusText.textContent = message;
+            statusElement.className = `status ${type}`;
+            
+            document.getElementById('connectionStatus').textContent = message;
+        }
+        
+        // Update camera status
+        function updateCameraStatus(status) {
+            document.getElementById('cameraStatus').textContent = status;
+        }
+        
+        // Start camera
+        async function startCamera() {
+            try {
+                updateStatus('Requesting camera access...');
+                updateCameraStatus('Starting...');
+                
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                });
+                
+                const videoElement = document.getElementById('localVideo');
+                videoElement.srcObject = localStream;
+                
+                isCameraActive = true;
+                updateStatus('Camera active - Monitoring exam area', 'connected');
+                updateCameraStatus('Active');
+                
+                document.getElementById('startButton').disabled = true;
+                document.getElementById('stopButton').disabled = false;
+                
+                // Send connection status to main page
+                sendConnectionStatus('connected');
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                updateStatus('Error accessing camera: ' + error.message, 'error');
+                updateCameraStatus('Error');
+            }
+        }
+        
+        // Stop camera
+        function stopCamera() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            const videoElement = document.getElementById('localVideo');
+            videoElement.srcObject = null;
+            
+            isCameraActive = false;
+            updateStatus('Camera stopped', 'info');
+            updateCameraStatus('Stopped');
+            
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+            
+            sendConnectionStatus('disconnected');
+        }
+        
+        // Send connection status to main page (if on same domain)
+        function sendConnectionStatus(status) {
+            try {
+                // Try to communicate with parent window
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'phone_connection',
+                        status: status,
+                        timestamp: Date.now()
+                    }, '*');
+                }
+                
+                // Also try localStorage for same-domain communication
+                localStorage.setItem('phone_camera_status', JSON.stringify({
+                    status: status,
+                    timestamp: Date.now()
+                }));
+                
+            } catch (error) {
+                console.log('Could not send status to main page:', error);
+            }
+        }
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                updateStatus('Page hidden - Camera may be inactive', 'error');
+            } else {
+                if (isCameraActive) {
+                    updateStatus('Camera active - Monitoring exam area', 'connected');
+                }
+            }
+        });
+        
+        // Handle beforeunload
+        window.addEventListener('beforeunload', (event) => {
+            if (isCameraActive) {
+                event.preventDefault();
+                event.returnValue = 'Camera is still active. Are you sure you want to leave?';
+                return event.returnValue;
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus('Ready to start camera', 'info');
+            updateCameraStatus('Ready');
+        });
+    </script>
+</body>
+</html> 
