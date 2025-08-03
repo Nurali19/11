@@ -83,6 +83,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear previous QR code
         qrCodeElement.innerHTML = '';
         
+        // Check if QRCode library is available
+        if (typeof QRCode === 'undefined') {
+            console.error('QRCode library not loaded');
+            updateConnectionStatus('QR code library not available - using manual URL', 'waiting');
+            
+            // Fallback: show URL as clickable link
+            qrCodeElement.innerHTML = `
+                <div style="padding: 20px; text-align: center; border: 2px dashed #ccc; background: #f9f9f9;">
+                    <p><strong>📱 Phone Connection</strong></p>
+                    <p>QR Code library not available</p>
+                    <p>Please click the link below:</p>
+                    <a href="${url}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">
+                        🔗 Open Phone Connection
+                    </a>
+                    <p style="word-break: break-all; font-family: monospace; font-size: 12px; margin-top: 10px;">${url}</p>
+                </div>
+            `;
+            return;
+        }
+        
         QRCode.toCanvas(qrCodeElement, url, {
             width: 256,
             margin: 2,
@@ -93,14 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }, function (error) {
             if (error) {
                 console.error('Error generating QR code:', error);
-                updateConnectionStatus('Error generating QR code', 'error');
+                updateConnectionStatus('Error generating QR code - using manual URL', 'waiting');
                 
-                // Fallback: show URL as text
+                // Fallback: show URL as clickable link
                 qrCodeElement.innerHTML = `
-                    <div style="padding: 20px; text-align: center; border: 2px dashed #ccc;">
-                        <p><strong>QR Code Error</strong></p>
-                        <p>Please use the manual URL below:</p>
-                        <p style="word-break: break-all; font-family: monospace;">${url}</p>
+                    <div style="padding: 20px; text-align: center; border: 2px dashed #ccc; background: #f9f9f9;">
+                        <p><strong>📱 Phone Connection</strong></p>
+                        <p>QR Code generation failed</p>
+                        <p>Please click the link below:</p>
+                        <a href="${url}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0;">
+                            🔗 Open Phone Connection
+                        </a>
+                        <p style="word-break: break-all; font-family: monospace; font-size: 12px; margin-top: 10px;">${url}</p>
                     </div>
                 `;
             } else {
@@ -620,7 +644,11 @@ document.addEventListener('DOMContentLoaded', () => {
             manualUrlElement.textContent = connectionUrl;
             
             updateConnectionStatus('Generating QR code...', 'waiting');
-            generateQRCode();
+            
+            // Wait a bit for QRCode library to load
+            setTimeout(() => {
+                generateQRCode();
+            }, 1000);
             
             updateConnectionStatus('Ready for phone connection', 'waiting');
             
